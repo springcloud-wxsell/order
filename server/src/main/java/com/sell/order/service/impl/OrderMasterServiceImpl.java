@@ -3,17 +3,24 @@ package com.sell.order.service.impl;
 import com.sell.common.dto.DecreaseStockDTO;
 import com.sell.common.dto.OrderDTO;
 import com.sell.common.dto.ProductInfoDTO;
+import com.sell.common.enums.OrderStatusEnum;
+import com.sell.common.enums.ResultEnum;
+import com.sell.common.exception.OrderException;
 import com.sell.common.pojo.OrderDetail;
+import com.sell.common.pojo.OrderDetailExample;
 import com.sell.common.pojo.OrderMaster;
 import com.sell.common.utils.KeyUtils;
 import com.sell.order.mapper.OrderDetailMapper;
 import com.sell.order.mapper.OrderMasterMapper;
+import com.sell.order.service.OrderDetailService;
 import com.sell.order.service.OrderMasterService;
 import com.sell.product.client.ProductClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -38,6 +45,7 @@ public class OrderMasterServiceImpl implements OrderMasterService {
 
     @Autowired
     private ProductClient productClient;
+
 
     @Override
     @Transactional
@@ -80,5 +88,32 @@ public class OrderMasterServiceImpl implements OrderMasterService {
         return orderDTO;
     }
 
+    @Override
+    @Transactional
+    public OrderDTO finish(String orderId) {
+        // 1. 查询订单
+        OrderMaster orderMaster = orderMasterMapper.selectByPrimaryKey(orderId);
+        if (StringUtils.isEmpty(orderMaster)) {
+            throw new OrderException(ResultEnum.ORDER_NOT_EXIST);
+        }
+        // 2. 判断订单状态
+        if (!OrderStatusEnum.NEW.getCode().equals(orderMaster.getOrderStatus().intValue())) {
+            throw new OrderException(ResultEnum.ORDER_STATUS_ERROR);
+        }
+        // 3. 修改订单状态
+        orderMaster.setOrderStatus(OrderStatusEnum.FINISHED.getCode().byteValue());
+        orderMasterMapper.updateByPrimaryKeySelective(orderMaster);
 
+        // 4. 查询订单详情(将订单详情返回)
+        OrderDetailExample example = new OrderDetailExample();
+        example.createCriteria().andOrderIdEqualTo(orderId);
+        List<OrderDetail> orderDetailList = orderDetailMapper.selectByExample(example);
+        if (CollectionUtils.isEmpty(orderDetailList)) {
+            throw new OrderException(ResultEnum.ORDER_DETAIL_NOT_EXIST);
+        }
+        OrderDTO orderDTO = new OrderDTO();
+        BeanUtils.copyProperties(orderMaster, orderDTO);
+        orderDTO.setOrderDetailList(orderDetailList);
+        return orderDTO;
+    }
 }

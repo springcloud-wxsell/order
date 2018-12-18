@@ -18,4 +18,11 @@ public interface OrderMasterService {
      */
     OrderDTO create(OrderDTO orderDTO);
 
+    /**
+     * 完结订单(只有卖家可以访问)
+     * @param orderId
+     * @return
+     */
+    OrderDTO finish(String orderId);
+
 }
