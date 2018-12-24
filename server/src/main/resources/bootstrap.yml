@@ -16,5 +16,24 @@ logging:
   level:
     com.sell.order.mapper: debug
     org.springframework.cloud.bus: debug
+hystrix:
+  commond:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 1000
+    getProductInfoList:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 1000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
 
 
