@@ -12,10 +12,24 @@ spring:
         input:
           group: order
           content-type: application/json
+  zipkin:
+    base-url: http://192.168.0.111:9411
+    sender:
+      type: web
+  sleuth:
+    sampler:
+      probability: 1
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka1:8761/eureka/,http://eureka2:8762/eureka/
+  instance:
+    prefer-ip-address: true
 logging:
   level:
     com.sell.order.mapper: debug
     org.springframework.cloud.bus: debug
+    org.springframework.cloud.openfeign: debug
 hystrix:
   commond:
     default:
@@ -28,7 +42,6 @@ hystrix:
         isolation:
           thread:
             timeoutInMilliseconds: 1000
-
 management:
   endpoints:
     web:
